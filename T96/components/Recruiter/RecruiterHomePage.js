@@ -18,10 +18,9 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SideDrawer from '../Recruiter/SideDrawer';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {API_URL} from '../../config';
+import { API_URL } from '../../config';
 
 const RecruiterHomePage = () => {
-  console.log('API URL:', API_URL);
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -71,7 +70,6 @@ const RecruiterHomePage = () => {
         setShortListedCount(totalShortlisted);
       }
 
-      
       const seekersRes = await fetch(`${API_URL}/api/users/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -81,7 +79,6 @@ const RecruiterHomePage = () => {
         userId: seeker.userId,
       }));
       setJobSeekers(updatedSeekers);
-      console.log('Job Seekers:', updatedSeekers);
     } catch (err) {
       console.error('Error loading recruiter home data:', err);
     } finally {
@@ -130,7 +127,6 @@ const RecruiterHomePage = () => {
   const renderItem = useCallback(({ item }) => (
     <TouchableOpacity
       style={styles.verticalCard}
-      
       onPress={() =>
         navigation.navigate('ApplicantDetails', {
           applicantId: item.userId,
@@ -139,9 +135,7 @@ const RecruiterHomePage = () => {
     >
       <Image
         source={{
-          uri:
-            item.profileImage ||
-            'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+          uri: item.profileImage || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
         }}
         style={styles.cardImageVertical}
         resizeMode="cover"
@@ -162,12 +156,21 @@ const RecruiterHomePage = () => {
       )}
       <TouchableWithoutFeedback onPress={closeDrawer}>
         <View style={styles.mainContent}>
+         
           <View style={styles.topNav}>
-            <TouchableOpacity onPress={toggleDrawer} style={styles.menuButton}>
-              <MaterialIcons name="menu" size={28} color="#7c3aed" />
-            </TouchableOpacity>
-            <Text style={styles.header}>Dashboard</Text>
-            <TouchableOpacity onPress={fetchData}></TouchableOpacity>
+            <View style={styles.navSide}>
+              <TouchableOpacity onPress={toggleDrawer} style={styles.menuButton}>
+                <MaterialIcons name="menu" size={28} color="#7c3aed" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.navCenter}>
+              <Text style={styles.header}>Dashboard</Text>
+            </View>
+            <View style={styles.navSide}>
+              <TouchableOpacity onPress={fetchData} style={styles.refreshButton}>
+                <MaterialIcons name="" size={24} color="#7c3aed" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <KeyboardAvoidingView
@@ -248,16 +251,32 @@ const styles = StyleSheet.create({
   mainContent: { flex: 1 },
   drawer: { position: 'absolute', zIndex: 100, width: 300, height: '100%' },
   content: { flex: 1, padding: 16, paddingBottom: 0 },
+
+  // ✅ Centered top nav
   topNav: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    backgroundColor: '#fff',
   },
-  menuButton: { padding: 8, borderRadius: 20 },
+  navSide: {
+    width: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   header: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+
+  menuButton: { padding: 8, borderRadius: 20 },
+
   statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
