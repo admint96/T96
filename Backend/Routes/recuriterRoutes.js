@@ -672,25 +672,37 @@ router.get('/job-applicants/:jobId', verifyToken, async (req, res) => {
 
 
 
+
+
 router.get('/applicant/:applicantId', verifyToken, async (req, res) => {
   try {
     const { applicantId } = req.params;
 
     console.log('Fetching details for applicant with userId:', applicantId);
 
-    const user = await JobSeekerProfile.findOne({ userId: applicantId }).select('-password');
+    const profile = await JobSeekerProfile.findOne({ userId: applicantId }).select('-password');
 
-    if (!user) {
-      return res.status(404).json({ message: 'Applicant not found' });
+    if (!profile) {
+      return res.status(404).json({ message: 'Applicant profile not found' });
     }
 
-    res.status(200).json({ applicant: user });
+    const auth = await UserAuth.findOne({ _id: applicantId }).select('email');
+
+    if (!auth) {
+      return res.status(404).json({ message: 'Applicant auth record not found' });
+    }
+
+    const applicant = {
+      ...profile._doc,
+      email: auth.email,
+    };
+
+    res.status(200).json({ applicant });
   } catch (error) {
     console.error('Error fetching applicant details:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
-
 
 
 router.post('/search-jobs', async (req, res) => {
