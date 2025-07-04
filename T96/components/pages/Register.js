@@ -10,9 +10,9 @@ import {
     Alert,
     ActivityIndicator,
 } from 'react-native';
-import { CheckBox } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {API_URL} from './config';
+import { API_URL } from '../../config';
+
 export default function RegistrationScreen({ navigation, route }) {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -22,8 +22,9 @@ export default function RegistrationScreen({ navigation, route }) {
     const [checked, setChecked] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const role = route.params?.role; 
-
+    const role = route.params?.role;
+  
+    console.log('API_URL:', API_URL);
     const handleRegister = async () => {
         if (!fullName || !email || !password || !mobileNumber) {
             Alert.alert('Error', 'Please fill all fields');
@@ -36,9 +37,8 @@ export default function RegistrationScreen({ navigation, route }) {
         }
 
         setLoading(true);
-   console.log('Role:', role); 
         try {
-            const response = await fetch(`${ API_URL }/api/auth/register`, {
+            const response = await fetch(`${API_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -53,14 +53,14 @@ export default function RegistrationScreen({ navigation, route }) {
                     role,
                 }),
             });
-         console.log('Response:', role);
+
             const data = await response.json();
 
             if (response.ok) {
                 Alert.alert('Success', 'Registration successful', [
                     {
                         text: 'OK',
-                        onPress: () => navigation.navigate('Login',{role}),
+                        onPress: () => navigation.navigate('Login', { role }),
                     },
                 ]);
             } else {
@@ -89,11 +89,9 @@ export default function RegistrationScreen({ navigation, route }) {
 
                 <View style={styles.separatorLine} />
 
-                {/* Form Title */}
                 <Text style={styles.heading}>Create your profile</Text>
                 <Text style={styles.subheading}>Please fill the registration form below</Text>
 
-                {/* Form Inputs */}
                 <Text style={styles.label}>Full name</Text>
                 <TextInput
                     placeholder="Enter your name"
@@ -124,6 +122,7 @@ export default function RegistrationScreen({ navigation, route }) {
                     onChangeText={setPassword}
                     style={styles.input}
                 />
+
                 <Text style={styles.label}>Mobile Number</Text>
                 <TextInput
                     placeholder="+91 Enter your mobile number"
@@ -151,13 +150,17 @@ export default function RegistrationScreen({ navigation, route }) {
                     </TouchableOpacity>
                 </View>
 
-                <CheckBox
-                    title="Send important updates via email"
-                    checked={checked}
+                {/* Custom Checkbox */}
+                <TouchableOpacity
                     onPress={() => setChecked(!checked)}
-                    containerStyle={{ backgroundColor: 'transparent', borderWidth: 0, marginLeft: 0 }}
-                    textStyle={{ fontWeight: 'normal' }}
-                />
+                    style={styles.checkboxContainer}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.checkbox}>
+                        {checked && <Icon name="checkmark" size={16} color="white" />}
+                    </View>
+                    <Text style={styles.checkboxText}>Send important updates via email</Text>
+                </TouchableOpacity>
 
                 <Text style={styles.terms}>
                     By clicking Register, you agree to the Terms and Conditions & Privacy Policy of Talent96
@@ -229,29 +232,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ccc',
     },
-    separator: {
-        textAlign: 'center',
-        marginVertical: 15,
-        color: '#666',
-    },
-    googleButton: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderColor: '#ccc',
-        borderWidth: 1,
-        alignSelf: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 30,
-        backgroundColor: '#fff',
-        marginBottom: 10,
-    },
-    googleButtonText: {
-        fontWeight: '600',
-        color: '#4169E1',
-        fontSize: 18,
-    },
     statusContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -269,6 +249,32 @@ const styles = StyleSheet.create({
         borderColor: '#6200ee',
         backgroundColor: '#e6ddff',
     },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 15,
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+        backgroundColor: '#6200ee',
+    },
+    checkboxText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    terms: {
+        fontSize: 12,
+        color: '#666',
+        marginTop: 10,
+        textAlign: 'center',
+    },
     registerButton: {
         marginTop: 20,
         backgroundColor: '#6200ee',
@@ -280,11 +286,5 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
-    },
-    terms: {
-        fontSize: 12,
-        color: '#666',
-        marginTop: 10,
-        textAlign: 'center',
     },
 });
