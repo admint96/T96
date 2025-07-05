@@ -4,6 +4,7 @@ const router = express.Router();
 
 const RecruiterProfile = require('../Models/RecruiterProfile');
 const JobSeekerProfile = require('../Models/JobSeekerProfile');
+const NewUsers =require('../Models/NewUsers');
 
 // GET: Summary counts
 router.get('/summary', async (req, res) => {
@@ -50,7 +51,14 @@ router.get('/summary', async (req, res) => {
   }
 });
 
-
+router.get('/new-users', async (req, res) => {
+  try {
+    const users = await NewUsers.find().sort({ createdAt: -1 });
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching new users', error: error.message });
+  }
+});
 
 // GET: Recent users as activity logs
 router.get('/', async (req, res) => {
