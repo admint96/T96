@@ -39,7 +39,7 @@ const recruiterProfileSchema = new mongoose.Schema(
     emailVerified: { type: Boolean, default: false },
     profileImage: {
       type: String,
-      default: 'https://randomuser.me/api/portraits/men/1.jpg',
+      default: 'https://www.shutterstock.com/image-vector/default-avatar-profile-icon-social-600nw-1677509740.jpg',
     },
     companyName: { type: String, default: null },
     companyWebsite: { type: String, default: null },
