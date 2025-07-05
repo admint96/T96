@@ -705,6 +705,8 @@ router.get('/applicant/:applicantId', verifyToken, async (req, res) => {
 });
 
 
+
+
 router.post('/search-jobs', async (req, res) => {
   try {
     const { designation = [], location = '', type = '' } = req.body;
@@ -932,7 +934,7 @@ router.put('/:jobId/applicants/:applicantId/status', verifyToken, async (req, re
     });
     await notification.save();
 
-   
+    
     const io = req.app.get('io');
     if (io) {
       io.to(applicant.userId.toString()).emit('new_notification', notification);
@@ -945,6 +947,82 @@ router.put('/:jobId/applicants/:applicantId/status', verifyToken, async (req, re
   } catch (err) {
     console.error('Error updating applicant status:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+router.get('/summary', verifyToken, async (req, res) => {
+  try {
+    const recruiters = await RecruiterProfile.find()
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .populate('userId', 'name email'); // Populate from UserAuth
+
+    const result = recruiters.map(r => {
+      // Sort to get latest job post
+      const sortedPosts = [...r.jobPosts].sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
+      const latestJob = sortedPosts[0];
+
+      return {
+        // From UserAuth
+        recruiterName: r.userId?.name || r.fullName || 'Unknown',
+        email: r.userId?.email || 'N/A',
+
+        // From RecruiterProfile
+        profileImage: r.profileImage,
+        companyName: r.companyName || 'N/A',
+        companyWebsite: r.companyWebsite || 'N/A',
+        emailVerified: r.emailVerified,
+        status: r.emailVerified ? 'Verified' : 'Pending',
+
+        // From Latest JobPost
+        jobTitle: latestJob?.jobTitle || 'No Jobs',
+        applicantCount: latestJob?.applicants?.length || 0,  // ✅ Replaced status with applicant count
+        jobType: latestJob?.jobType || 'N/A',
+        location: latestJob?.location || 'N/A',
+        salary: latestJob?.salary || 'N/A',
+        experience: latestJob?.experience || 'N/A',
+        openings: latestJob?.openings || 0,
+        postedAt: latestJob?.postedAt || null,
+        skills: latestJob?.skills || [],
+        description: latestJob?.description || 'N/A',
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('Recruiters summary error:', err);
+    res.status(500).json({ message: 'Error fetching recruiters summary' });
+  }
+});
+
+
+
+
+ 
+router.get('/summary1', verifyToken, async (req, res) => {
+  try {
+    const recruiters = await RecruiterProfile.find()
+      .populate('userId', 'name email') // Populating name and email from UserAuth
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    const recruiterData = recruiters.map(r => {
+      // Sort jobPosts by postedAt to get the latest company
+      const sortedPosts = [...r.jobPosts].sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
+      const latestPost = sortedPosts[0];
+
+      return {
+        name: r.userId?.name || r.fullName || 'N/A',
+        email: r.userId?.email || 'N/A',
+        companyName: latestPost?.companyName || r.companyName || 'N/A',
+        status: r.emailVerified ? 'Verified' : 'Pending',
+        createdAt: r.createdAt,
+      };
+    });
+
+    res.json({ recruiters: recruiterData });
+  } catch (err) {
+    console.error('Recruiters summary error:', err);
+    res.status(500).json({ message: 'Error fetching recruiters summary' });
   }
 });
 
