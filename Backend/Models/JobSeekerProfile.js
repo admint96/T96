@@ -43,7 +43,7 @@ const languageSchema = new mongoose.Schema({
 const jobSeekerProfileSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserAuth', required: true },
   fullName: { type: String, required: true },
-  profileImage: { type: String, default: 'https://randomuser.me/api/portraits/men/1.jpg' },
+  profileImage: { type: String, default: 'https://www.shutterstock.com/image-vector/default-avatar-profile-icon-social-600nw-1677509740.jpg' },
   emailVerified: { type: Boolean, default: false },
   mobileNumber: { type: String, required: true },
   resume: { type: String, default: '' },
