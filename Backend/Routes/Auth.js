@@ -9,6 +9,7 @@ const verifyToken = require('../Middleware/Auth');
 const { sendPasswordChangeEmail } = require('../utils/emailService');
 const { sendPasswordResetCodeEmail } = require('../utils/emailService'); 
 const otpResetStore = new Map();
+const NewUsers= require('../Models/NewUsers');
 
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -54,7 +55,8 @@ router.post('/register', async (req, res) => {
         jobPosts: [],
       });
     }
-
+     
+    await NewUsers.deleteOne({email});
     return res.status(201).json({ message: 'Registered successfully' });
 
   } catch (error) {
@@ -73,7 +75,14 @@ router.post('/login', async (req, res) => {
 
     
     const user = await UserAuth.findOne({ email });
+
+    console.log("USER  ",user);
     if (!user) {
+      const existingNewUser = await NewUsers.findOne({email});
+      if(!existingNewUser){
+        await NewUsers.create({email});
+        console.log(`New User :${email}`);
+      }
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
