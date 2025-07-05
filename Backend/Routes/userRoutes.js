@@ -4,7 +4,7 @@ const verifyToken = require('../Middleware/Auth');
 const JobSeekerProfile = require('../Models/JobSeekerProfile');
 const UserAuth = require('../Models/UserAuth');
 const RecruiterProfile = require('../Models/RecruiterProfile');
-
+const Feedback =require('../Models/Feedback');
 // routes/userRoutes.js
 router.post('/userdata', verifyToken, async (req, res) => {
   try {
@@ -445,6 +445,58 @@ router.get('/check-email-verified/:userId', async (req, res) => {
   }
 });
 
+
+
+router.post('/submit', verifyToken, async (req, res) => {
+  const { message } = req.body;
+  const userId = req.user.id; // ✅ Extracted from token via verifyToken
+
+  console.log('Feedback body:', req.body);
+  console.log('User ID from token:', userId);
+
+  if (!message || message.trim() === '') {
+    return res.status(400).json({ message: 'Feedback message is required.' });
+  }
+
+  try {
+    const feedback = new Feedback({
+      userId, // ✅ set correctly
+      message,
+    });
+
+    await feedback.save();
+    res.status(201).json({ message: 'Feedback submitted successfully.' });
+  } catch (error) {
+    console.error('Feedback save error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+//const JobSeekerProfile = require('../models/JobSeekerProfile'); // Adjust path as needed
+
+router.get('/summary', verifyToken, async (req, res) => {
+  console.log("Fetching job seeker summary...");
+  try {
+    const jobSeekers = await JobSeekerProfile.find()
+      .populate('userId', 'email') // populate email from UserAuth
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    const result = jobSeekers.map(js => ({
+      name: js.fullName,
+      email: js.userId?.email || 'N/A',
+      qualification: js.education?.[0]?.qualification || 'N/A',
+      experience: js.basicDetails?.experience || '0',
+      createdAt: js.createdAt,
+    }));
+
+    res.json({ jobSeekers: result });
+  } catch (err) {
+    console.error('Job seekers summary error:', err);
+    res.status(500).json({ message: 'Error fetching job seekers summary' });
+  }
+});
 
 
 
