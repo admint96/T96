@@ -474,22 +474,27 @@ router.post('/submit', verifyToken, async (req, res) => {
 
 
 //const JobSeekerProfile = require('../models/JobSeekerProfile'); // Adjust path as needed
-
 router.get('/summary', verifyToken, async (req, res) => {
   console.log("Fetching job seeker summary...");
   try {
     const jobSeekers = await JobSeekerProfile.find()
-      .populate('userId', 'email') // populate email from UserAuth
+      .populate({
+        path: 'userId',
+        select: 'email role',
+        match: { role: { $ne: 'admin' } } // ⛔ Exclude admin users
+      })
       .sort({ createdAt: -1 })
       .limit(20);
 
-    const result = jobSeekers.map(js => ({
-      name: js.fullName,
-      email: js.userId?.email || 'N/A',
-      qualification: js.education?.[0]?.qualification || 'N/A',
-      experience: js.basicDetails?.experience || '0',
-      createdAt: js.createdAt,
-    }));
+    const result = jobSeekers
+      .filter(js => js.userId !== null) // ✅ Filter out ones where userId (admin) was excluded
+      .map(js => ({
+        name: js.fullName,
+        email: js.userId?.email || 'N/A',
+        qualification: js.education?.[0]?.qualification || 'N/A',
+        experience: js.basicDetails?.experience || '0',
+        createdAt: js.createdAt,
+      }));
 
     res.json({ jobSeekers: result });
   } catch (err) {
@@ -497,6 +502,7 @@ router.get('/summary', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching job seekers summary' });
   }
 });
+
 
 
 
