@@ -949,43 +949,43 @@ router.put('/:jobId/applicants/:applicantId/status', verifyToken, async (req, re
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
 router.get('/summary', verifyToken, async (req, res) => {
   try {
     const recruiters = await RecruiterProfile.find()
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .populate('userId', 'name email'); // Populate from UserAuth
+      .populate('userId', 'name email') // Populate recruiter name & email
+      .lean(); // Use lean to improve performance
 
-    const result = recruiters.map(r => {
-      // Sort to get latest job post
-      const sortedPosts = [...r.jobPosts].sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
-      const latestJob = sortedPosts[0];
-
-      return {
+    const result = recruiters.flatMap(r => {
+      return (r.jobPosts || []).map(post => ({
         // From UserAuth
         recruiterName: r.userId?.name || r.fullName || 'Unknown',
         email: r.userId?.email || 'N/A',
 
         // From RecruiterProfile
         profileImage: r.profileImage,
-        companyName: r.companyName || 'N/A',
+        companyName: post.companyName || r.companyName || 'N/A',
         companyWebsite: r.companyWebsite || 'N/A',
         emailVerified: r.emailVerified,
         status: r.emailVerified ? 'Verified' : 'Pending',
 
-        // From Latest JobPost
-        jobTitle: latestJob?.jobTitle || 'No Jobs',
-        applicantCount: latestJob?.applicants?.length || 0,  // ✅ Replaced status with applicant count
-        jobType: latestJob?.jobType || 'N/A',
-        location: latestJob?.location || 'N/A',
-        salary: latestJob?.salary || 'N/A',
-        experience: latestJob?.experience || 'N/A',
-        openings: latestJob?.openings || 0,
-        postedAt: latestJob?.postedAt || null,
-        skills: latestJob?.skills || [],
-        description: latestJob?.description || 'N/A',
-      };
+        // From each JobPost
+        jobTitle: post.jobTitle || 'No Job Title',
+        applicantCount: post.applicants?.length || 0,
+        jobType: post.jobType || 'N/A',
+        location: post.location || 'N/A',
+        salary: post.salary || 'N/A',
+        experience: post.experience || 'N/A',
+        openings: post.openings || 0,
+        postedAt: post.postedAt || null,
+        skills: post.skills || [],
+        description: post.description || 'N/A',
+      }));
     });
+
+    // Optional: sort all jobs by postedAt descending
+    result.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
 
     res.json(result);
   } catch (err) {
@@ -996,18 +996,14 @@ router.get('/summary', verifyToken, async (req, res) => {
 
 
 
-
- 
 router.get('/summary1', verifyToken, async (req, res) => {
   try {
     const recruiters = await RecruiterProfile.find()
-      .populate('userId', 'name email') // Populating name and email from UserAuth
-      .sort({ createdAt: -1 })
-      .limit(20);
+      .populate('userId', 'name email')
+      .lean();
 
     const recruiterData = recruiters.map(r => {
-      // Sort jobPosts by postedAt to get the latest company
-      const sortedPosts = [...r.jobPosts].sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
+      const sortedPosts = [...(r.jobPosts || [])].sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
       const latestPost = sortedPosts[0];
 
       return {
@@ -1015,9 +1011,13 @@ router.get('/summary1', verifyToken, async (req, res) => {
         email: r.userId?.email || 'N/A',
         companyName: latestPost?.companyName || r.companyName || 'N/A',
         status: r.emailVerified ? 'Verified' : 'Pending',
+        jobCount: r.jobPosts?.length || 0,
         createdAt: r.createdAt,
       };
     });
+
+    // ✅ Sort recruiters by jobCount descending
+    recruiterData.sort((a, b) => b.jobCount - a.jobCount);
 
     res.json({ recruiters: recruiterData });
   } catch (err) {
@@ -1025,7 +1025,6 @@ router.get('/summary1', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching recruiters summary' });
   }
 });
-
 
 
 module.exports = router;
